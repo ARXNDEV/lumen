@@ -18,6 +18,10 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var cancellables = Set<AnyCancellable>()
     private var lastCount = 0
 
+    // User-dragged position (top-left anchor). nil = use default centered spot.
+    private var userAnchor: NSPoint?
+    private var isProgrammaticMove = false
+
     private let width: CGFloat = 720
     private let headerHeight: CGFloat = 58
     private let rowHeight: CGFloat = 45
@@ -44,7 +48,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
-        panel.isMovableByWindowBackground = false
+        // Drag the panel from any empty area (or the search-bar background).
+        panel.isMovableByWindowBackground = true
         panel.delegate = self
 
         let hosting = NSHostingView(rootView: ContentView(model: viewModel))
@@ -139,7 +144,14 @@ final class PanelController: NSObject, NSWindowDelegate {
     func show() {
         guard let screen = NSScreen.main else { return }
         let sf = screen.visibleFrame
-        topY = sf.maxY - sf.height * 0.2
+
+        // Reuse the position the user dragged to; otherwise the default spot.
+        if let anchor = userAnchor, screen.frame.contains(anchor) {
+            topY = anchor.y
+        } else {
+            topY = sf.maxY - sf.height * 0.2
+            userAnchor = nil
+        }
 
         // Start a fresh Quick AI chat after 10 minutes of inactivity.
         if viewModel.mode == .ai,
@@ -200,18 +212,32 @@ final class PanelController: NSObject, NSWindowDelegate {
             }
         }
 
-        let x = sf.midX - width / 2
+        // Keep the user's horizontal position after a drag; else center.
+        let x = userAnchor?.x ?? (sf.midX - width / 2)
         let frame = NSRect(x: x, y: topY - h, width: width, height: h)
 
+        isProgrammaticMove = true
         if panel.isVisible {
-            NSAnimationContext.runAnimationGroup { ctx in
+            NSAnimationContext.runAnimationGroup({ ctx in
                 ctx.duration = 0.13
                 ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
                 panel.animator().setFrame(frame, display: true)
-            }
+            }, completionHandler: { [weak self] in
+                self?.isProgrammaticMove = false
+            })
         } else {
             panel.setFrame(frame, display: true)
+            isProgrammaticMove = false
         }
+    }
+
+    /// Records the top-left position the user drags the panel to, so it stays
+    /// there (and grows downward from there) instead of snapping to center.
+    func windowDidMove(_ notification: Notification) {
+        guard !isProgrammaticMove, panel.isVisible else { return }
+        let frame = panel.frame
+        userAnchor = NSPoint(x: frame.minX, y: frame.maxY)
+        topY = frame.maxY
     }
 
     /// Set by --demo mode so screenshots can be taken while other apps are frontmost.
