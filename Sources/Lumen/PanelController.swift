@@ -79,18 +79,25 @@ final class PanelController: NSObject, NSWindowDelegate {
             }
             .store(in: &cancellables)
 
-        // ⌘1…⌘9 opens the corresponding result (matches the number badges).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self,
-                  self.panel.isKeyWindow,
-                  self.viewModel.mode == .search,
-                  event.modifierFlags.contains(.command),
-                  let chars = event.charactersIgnoringModifiers,
-                  let n = Int(chars), (1...9).contains(n),
-                  self.viewModel.results.indices.contains(n - 1)
-            else { return event }
-            self.viewModel.execute(self.viewModel.results[n - 1])
-            return nil
+            guard let self, self.panel.isKeyWindow else { return event }
+
+            // Esc always closes Lumen, whatever is focused inside it.
+            if event.keyCode == 53 { // Escape
+                self.hide()
+                return nil
+            }
+
+            // ⌘1…⌘9 opens the corresponding result (matches the number badges).
+            if self.viewModel.mode == .search,
+               event.modifierFlags.contains(.command),
+               let chars = event.charactersIgnoringModifiers,
+               let n = Int(chars), (1...9).contains(n),
+               self.viewModel.results.indices.contains(n - 1) {
+                self.viewModel.execute(self.viewModel.results[n - 1])
+                return nil
+            }
+            return event
         }
     }
 
@@ -240,11 +247,12 @@ final class PanelController: NSObject, NSWindowDelegate {
         topY = frame.maxY
     }
 
-    /// Set by --demo mode so screenshots can be taken while other apps are frontmost.
+    /// Kept for the screenshot/demo flows; no longer used for click-outside.
     var disableAutoHide = false
 
+    /// Lumen stays on screen when you click outside — it only closes on Esc
+    /// (or ⌥Space toggle). So we intentionally do NOT hide on resign-key.
     func windowDidResignKey(_ notification: Notification) {
-        guard !disableAutoHide else { return }
-        hide()
+        // no-op: stay visible until Esc.
     }
 }
