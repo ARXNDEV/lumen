@@ -1,0 +1,6 @@
+.build/
+Lumen.app/
+.DS_Store
+secrets.env
+*.xcodeproj
+.swiftpm/

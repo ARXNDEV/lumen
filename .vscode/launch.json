@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:raycast}",
+            "name": "Debug Lumen",
+            "target": "Lumen",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Lumen"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:raycast}",
+            "name": "Release Lumen",
+            "target": "Lumen",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Lumen"
+        }
+    ]
+}
