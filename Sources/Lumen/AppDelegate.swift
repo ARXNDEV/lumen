@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var panelController: PanelController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        LicenseManager.shared.ensureTrialStarted()
         AppIndex.shared.reload()
         ClipboardMonitor.shared.start()
 
@@ -96,6 +97,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatItem.target = self
         menu.addItem(chatItem)
 
+        let proItem = NSMenuItem(title: "Lumen Pro…", action: #selector(showPaywall), keyEquivalent: "")
+        proItem.target = self
+        menu.addItem(proItem)
+
         let keyItem = NSMenuItem(title: "AI Settings…", action: #selector(setAPIKey), keyEquivalent: "")
         keyItem.target = self
         menu.addItem(keyItem)
@@ -123,5 +128,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func setAPIKey() {
         APIKeyPrompt.show()
+    }
+
+    @objc private func showPaywall() {
+        PaywallController.shared.show()
     }
 }

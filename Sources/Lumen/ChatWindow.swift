@@ -95,6 +95,10 @@ final class ChatViewModel: ObservableObject {
     func send() {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isStreaming else { return }
+        guard LicenseManager.shared.entitled else {
+            PaywallController.shared.show()
+            return
+        }
         if selectedID == nil { newChat() }
         guard let id = selectedID else { return }
         input = ""

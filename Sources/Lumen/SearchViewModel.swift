@@ -115,6 +115,11 @@ final class SearchViewModel: ObservableObject {
 
     func send(_ text: String) {
         guard !isStreaming else { return }
+        guard LicenseManager.shared.entitled else {
+            onDismiss?()
+            PaywallController.shared.show()
+            return
+        }
         lastAIActivity = Date()
         aiMessages.append(ChatMessage(role: "user", content: text))
         stream()

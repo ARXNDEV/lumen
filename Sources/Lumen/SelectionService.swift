@@ -110,6 +110,10 @@ final class QuickFix {
 
     private func trigger() {
         guard !busy, SelectionService.accessibilityGranted else { return }
+        guard LicenseManager.shared.entitled else {
+            PaywallController.shared.show()
+            return
+        }
         guard let text = SelectionService.selectedText(),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else { return }

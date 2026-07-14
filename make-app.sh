@@ -9,10 +9,21 @@
 set -e
 cd "$(dirname "$0")"
 
-AI_KEY="${LUMEN_AI_KEY:-$(defaults read com.lumen.launcher groqAPIKey 2>/dev/null || true)}"
-if [ -z "$AI_KEY" ]; then
-    echo "warning: no AI key found (set LUMEN_AI_KEY) — building without built-in AI access"
+# Comma-separated pool of AI service keys. Installs are spread across the
+# pool and the app rotates keys automatically on rate limits.
+#   LUMEN_AI_KEYS="key1,key2,key3" ./make-app.sh
+AI_KEYS="${LUMEN_AI_KEYS:-${LUMEN_AI_KEY:-$(defaults read com.lumen.launcher groqAPIKey 2>/dev/null || true)}}"
+if [ -z "$AI_KEYS" ]; then
+    echo "warning: no AI keys found (set LUMEN_AI_KEYS) — building without built-in AI access"
 fi
+
+KEYS_XML=""
+IFS=',' read -ra KEY_ARR <<< "$AI_KEYS"
+for k in "${KEY_ARR[@]}"; do
+    k="$(echo "$k" | xargs)"
+    [ -n "$k" ] && KEYS_XML="${KEYS_XML}        <string>${k}</string>
+"
+done
 
 swift build -c release
 
@@ -44,8 +55,6 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
-    <key>LumenAIKey</key>
-    <string>${AI_KEY}</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>Lumen uses automation for system commands like Empty Trash and Toggle Dark Mode.</string>
     <key>NSCalendarsUsageDescription</key>
@@ -56,8 +65,9 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <string>Lumen shows due reminders and creates new ones from the launcher.</string>
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Lumen shows due reminders and creates new ones from the launcher.</string>
-    <key>LumenAIKey</key>
-    <string>${AI_KEY}</string>
+    <key>LumenAIKeys</key>
+    <array>
+${KEYS_XML}    </array>
 </dict>
 </plist>
 EOF
