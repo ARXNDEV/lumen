@@ -74,5 +74,16 @@ ${KEYS_XML}    </array>
 </plist>
 EOF
 
-codesign --force -s - "$APP"
+# Prefer a stable signing identity so macOS permissions survive rebuilds.
+# Set up once with scripts/setup-signing.sh (creates "Lumen Dev"), or point
+# LUMEN_SIGN_ID at a Developer ID for distribution.
+SIGN_ID="${LUMEN_SIGN_ID:-Lumen Dev}"
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "$SIGN_ID"; then
+    codesign --force --deep --options runtime -s "$SIGN_ID" "$APP"
+    echo "Signed with stable identity: $SIGN_ID"
+else
+    codesign --force -s - "$APP"
+    echo "note: ad-hoc signed — permissions will reset on each rebuild."
+    echo "      run ./scripts/setup-signing.sh once for stable permissions."
+fi
 echo "Built $APP — run with: open $APP"
