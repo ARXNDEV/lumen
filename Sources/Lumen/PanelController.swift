@@ -38,6 +38,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.appearance = NSAppearance(named: .darkAqua)
+        // Hidden from screen recording / screen share (like password managers).
+        panel.sharingType = PrivacyMode.shared.hiddenFromCapture ? .none : .readOnly
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hasShadow = true
@@ -85,6 +87,10 @@ final class PanelController: NSObject, NSWindowDelegate {
             self.viewModel.execute(self.viewModel.results[n - 1])
             return nil
         }
+    }
+
+    func applyPrivacy() {
+        panel.sharingType = PrivacyMode.shared.hiddenFromCapture ? .none : .readOnly
     }
 
     func toggle() {

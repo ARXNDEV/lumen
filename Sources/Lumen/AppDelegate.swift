@@ -101,6 +101,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         proItem.target = self
         menu.addItem(proItem)
 
+        let stealthItem = NSMenuItem(title: "Stealth Mode (hide from screen share)", action: #selector(toggleStealth(_:)), keyEquivalent: "")
+        stealthItem.target = self
+        stealthItem.state = PrivacyMode.shared.hiddenFromCapture ? .on : .off
+        menu.addItem(stealthItem)
+
         let keyItem = NSMenuItem(title: "AI Settings…", action: #selector(setAPIKey), keyEquivalent: "")
         keyItem.target = self
         menu.addItem(keyItem)
@@ -132,5 +137,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showPaywall() {
         PaywallController.shared.show()
+    }
+
+    @objc private func toggleStealth(_ sender: NSMenuItem) {
+        PrivacyMode.shared.toggle()
+        sender.state = PrivacyMode.shared.hiddenFromCapture ? .on : .off
     }
 }

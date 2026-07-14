@@ -24,6 +24,7 @@ final class ChatWindowController: NSObject {
                 )
                 w.title = "Lumen AI Chat"
                 w.appearance = NSAppearance(named: .darkAqua)
+                w.sharingType = PrivacyMode.shared.hiddenFromCapture ? .none : .readOnly
                 w.titlebarAppearsTransparent = true
                 w.titleVisibility = .hidden
                 w.styleMask.insert(.fullSizeContentView)

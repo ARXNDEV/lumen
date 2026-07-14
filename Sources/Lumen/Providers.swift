@@ -160,6 +160,14 @@ enum SystemProvider {
                 run: { APIKeyPrompt.show() }),
         Command(name: "Lumen Pro", subtitle: "Subscription, trial status and license", symbol: "crown.fill",
                 run: { PaywallController.shared.show() }),
+        Command(
+            name: PrivacyMode.shared.hiddenFromCapture ? "Disable Stealth Mode" : "Enable Stealth Mode",
+            subtitle: PrivacyMode.shared.hiddenFromCapture
+                ? "Currently hidden from screen recording & sharing"
+                : "Hide Lumen from screen recording & sharing",
+            symbol: PrivacyMode.shared.hiddenFromCapture ? "eye.slash.fill" : "eye.fill",
+            run: { PrivacyMode.shared.toggle() }
+        ),
         Command(name: "Edit AI Profile", subtitle: "Personalize AI answers (role, style, languages)", symbol: "person.crop.circle.badge.checkmark",
                 run: { ProfilePrompt.show() }),
         Command(name: "New Snippet", subtitle: "Create a reusable text snippet", symbol: "text.badge.plus",
