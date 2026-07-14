@@ -255,13 +255,43 @@ struct QuickAIView: View {
     var body: some View {
         VStack(spacing: 0) {
             if model.aiMessages.isEmpty && !model.isStreaming {
-                emptyState
+                if let img = model.pendingImage {
+                    screenshotPrompt(img)
+                } else {
+                    emptyState
+                }
             } else {
                 messageList
             }
             Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1)
             toolbar
         }
+    }
+
+    private func screenshotPrompt(_ base64: String) -> some View {
+        VStack(spacing: 12) {
+            if let nsImage = ScreenshotService.nsImage(fromBase64: base64) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+            }
+            HStack(spacing: 6) {
+                Image(systemName: "text.viewfinder")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.gradient)
+                Text("Screenshot ready — type your question and press ↩")
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {

@@ -12,9 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ClipboardMonitor.shared.start()
 
         panelController = PanelController()
-        hotkey = HotkeyManager { [weak self] in
-            self?.panelController.toggle()
-        }
+        hotkey = HotkeyManager(
+            toggle: { [weak self] in self?.panelController.toggle() },
+            screenshot: { [weak self] in self?.panelController.screenshotAndAsk() }
+        )
         quickFix = QuickFix()
         quickFix.start()
 

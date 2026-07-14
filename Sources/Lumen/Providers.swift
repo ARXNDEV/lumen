@@ -154,6 +154,10 @@ enum SystemProvider {
                 run: { Shell.appleScript("tell application \"Finder\" to empty trash") }),
         Command(name: "Toggle Dark Mode", subtitle: "Switch between light and dark appearance", symbol: "circle.lefthalf.filled",
                 run: { Shell.appleScript("tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode") }),
+        Command(name: "Screenshot & Ask AI", subtitle: "Silently capture a region and ask about it  (⌥⇧2)", symbol: "text.viewfinder",
+                run: {
+                    (NSApp.delegate as? AppDelegate)?.panelController.screenshotAndAsk()
+                }),
         Command(name: "Open AI Chat", subtitle: "Full Lumen AI chat window", symbol: "bubble.left.and.bubble.right.fill",
                 run: { ChatWindowController.shared.open() }),
         Command(name: "AI Settings", subtitle: "Advanced — override the built-in AI access", symbol: "key.fill",

@@ -20,6 +20,8 @@ final class SearchViewModel: ObservableObject {
     @Published var aiMessages: [ChatMessage] = []
     @Published var streamingText = ""
     @Published var isStreaming = false
+    /// Screenshot captured and waiting for the user's question.
+    @Published var pendingImage: String?
     @Published var aiModel: String = GroqClient.currentDefaultModel()
     /// Measured height of the Quick AI transcript, used to size the panel.
     @Published var aiContentHeight: CGFloat = 0
@@ -111,6 +113,7 @@ final class SearchViewModel: ObservableObject {
         isStreaming = false
         streamingText = ""
         aiMessages = []
+        pendingImage = nil
     }
 
     func send(_ text: String) {
@@ -121,8 +124,18 @@ final class SearchViewModel: ObservableObject {
             return
         }
         lastAIActivity = Date()
-        aiMessages.append(ChatMessage(role: "user", content: text))
+        let image = pendingImage
+        pendingImage = nil
+        aiMessages.append(ChatMessage(role: "user", content: text, imageBase64: image))
         stream()
+    }
+
+    /// Silent screenshot → attach to Quick AI → wait for the question.
+    /// Called by PanelController after it hides the panel for capture.
+    func attachScreenshot(_ base64: String) {
+        mode = .ai
+        pendingImage = base64
+        // Don't auto-send; user types the question first.
     }
 
     func regenerate() {

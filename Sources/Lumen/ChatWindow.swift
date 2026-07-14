@@ -514,23 +514,39 @@ struct MessageBubble: View {
 
     var body: some View {
         if message.role == "user" {
-            // You: right-aligned minimal bubble
+            // You: right-aligned minimal bubble (with optional screenshot)
             HStack {
                 Spacer(minLength: 60)
-                Text(message.content)
-                    .font(.lumen(13, .medium))
-                    .lineSpacing(2)
-                    .padding(.horizontal, 13)
-                    .padding(.vertical, 9)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Theme.selectionGradient)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Theme.violet.opacity(0.25), lineWidth: 1)
-                    )
-                    .textSelection(.enabled)
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let img = message.imageBase64,
+                       let nsImage = ScreenshotService.nsImage(fromBase64: img) {
+                        Image(nsImage: nsImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: 260, maxHeight: 180)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                            )
+                    }
+                    if !message.content.isEmpty {
+                        Text(message.content)
+                            .font(.lumen(13, .medium))
+                            .lineSpacing(2)
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 9)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Theme.selectionGradient)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(Theme.violet.opacity(0.25), lineWidth: 1)
+                            )
+                            .textSelection(.enabled)
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         } else {

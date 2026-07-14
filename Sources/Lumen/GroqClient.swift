@@ -6,6 +6,8 @@ struct ChatMessage: Codable, Identifiable, Equatable {
     var id = UUID()
     let role: String // "user" | "assistant"
     var content: String
+    /// Optional attached screenshot (base64 PNG) for vision questions.
+    var imageBase64: String?
 }
 
 // MARK: - AI client (OpenAI-compatible, streaming, multi-key rotation)
@@ -29,6 +31,9 @@ final class GroqClient {
         Model(id: "moonshotai/kimi-k2-instruct", name: "Kimi K2"),
         Model(id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 70B (reasoning)"),
     ]
+
+    /// Vision-capable model used automatically when a message has an image.
+    static let visionModel = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     static func name(for id: String) -> String {
         models.first { $0.id == id }?.name ?? id
@@ -155,10 +160,28 @@ final class GroqClient {
         req.httpMethod = "POST"
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        var msgs: [[String: String]] = [["role": "system", "content": Self.systemPrompt]]
-        msgs += messages.map { ["role": $0.role, "content": $0.content] }
+
+        let hasImage = messages.contains { $0.imageBase64 != nil }
+
+        var msgs: [[String: Any]] = [["role": "system", "content": Self.systemPrompt]]
+        for m in messages {
+            if let img = m.imageBase64 {
+                // OpenAI-compatible multimodal content array.
+                msgs.append([
+                    "role": m.role,
+                    "content": [
+                        ["type": "text", "text": m.content.isEmpty ? "What's in this screenshot?" : m.content],
+                        ["type": "image_url", "image_url": ["url": "data:image/png;base64,\(img)"]],
+                    ],
+                ])
+            } else {
+                msgs.append(["role": m.role, "content": m.content])
+            }
+        }
+
         var body: [String: Any] = [
-            "model": model,
+            // Force the vision model whenever an image is present.
+            "model": hasImage ? Self.visionModel : model,
             "messages": msgs,
             "temperature": Self.temperature,
         ]

@@ -57,6 +57,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Lumen uses automation for system commands like Empty Trash and Toggle Dark Mode.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Lumen captures screenshots so you can ask AI questions about what's on your screen.</string>
     <key>NSCalendarsUsageDescription</key>
     <string>Lumen shows your upcoming events in the launcher and widgets.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
