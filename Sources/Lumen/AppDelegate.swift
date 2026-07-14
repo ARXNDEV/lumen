@@ -30,6 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Debug/design mode: keep the panel visible with a sample query so it
         // can be screenshotted while another app is frontmost.
+        if CommandLine.arguments.contains("--analyze") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.panelController.disableAutoHide = true
+                self?.panelController.screenshotAndAsk()
+            }
+        }
+
         if let i = CommandLine.arguments.firstIndex(of: "--demo") {
             let demoQuery = CommandLine.arguments.count > i + 1 ? CommandLine.arguments[i + 1] : ""
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in

@@ -138,6 +138,35 @@ final class SearchViewModel: ObservableObject {
         // Don't auto-send; user types the question first.
     }
 
+    /// Shown to the user in the bubble; the fuller instruction is appended for
+    /// the model only.
+    static let autoScreenshotLabel = "Analyze my screen"
+    private static let autoScreenshotPrompt = autoScreenshotLabel + """
+    . If there's a question, error, code, form, or task visible, answer or \
+    solve it directly and concisely. Otherwise, briefly explain what's shown \
+    and what I might want to do next.
+    """
+
+    /// Silent full-screen capture that is sent to the AI immediately with a
+    /// default prompt — no typing needed (⌥⇧2).
+    func askAboutScreenshot(_ base64: String) {
+        guard LicenseManager.shared.entitled else {
+            onDismiss?()
+            PaywallController.shared.show()
+            return
+        }
+        newAIChat()
+        mode = .ai
+        lastAIActivity = Date()
+        // Show a short label in the bubble; send the full instruction to the model.
+        aiMessages.append(ChatMessage(
+            role: "user",
+            content: Self.autoScreenshotLabel,
+            imageBase64: base64
+        ))
+        streamWithOverride(lastUserContent: Self.autoScreenshotPrompt)
+    }
+
     func regenerate() {
         guard !isStreaming, aiMessages.last?.role == "assistant" else { return }
         aiMessages.removeLast()
@@ -155,11 +184,23 @@ final class SearchViewModel: ObservableObject {
     }
 
     private func stream() {
+        streamWithOverride(lastUserContent: nil)
+    }
+
+    /// Streams a reply. If `lastUserContent` is set, the last user message is
+    /// sent to the model with that text (used to keep a short label in the UI
+    /// while giving the model a fuller instruction).
+    private func streamWithOverride(lastUserContent: String?) {
         isStreaming = true
         streamingText = ""
+        var payload = aiMessages
+        if let override = lastUserContent,
+           let idx = payload.lastIndex(where: { $0.role == "user" }) {
+            payload[idx].content = override
+        }
         streamTask = GroqClient.shared.stream(
             model: aiModel,
-            messages: aiMessages,
+            messages: payload,
             onDelta: { [weak self] delta in
                 self?.streamingText += delta
             },

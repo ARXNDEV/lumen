@@ -93,15 +93,32 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.sharingType = PrivacyMode.shared.hiddenFromCapture ? .none : .readOnly
     }
 
-    /// Hide Lumen, let the user select a region silently, then reopen in AI
-    /// mode with the screenshot attached and the cursor ready for a question.
+    /// ⌥⇧2: silently capture the FULL screen, send it straight to the AI with
+    /// a default prompt, and show the answer — no region select, no typing.
     func screenshotAndAsk() {
         guard LicenseManager.shared.entitled else {
             PaywallController.shared.show()
             return
         }
+        let wasVisible = panel.isVisible
+        if wasVisible { hide() }
+        // Let the panel disappear before capture so it's never in the shot.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            ScreenshotService.captureFullScreen { [weak self] base64 in
+                guard let self, let base64 else { return }
+                self.show()
+                self.viewModel.askAboutScreenshot(base64)
+            }
+        }
+    }
+
+    /// Region-select variant: capture a region, then wait for a typed question.
+    func screenshotRegionAndAsk() {
+        guard LicenseManager.shared.entitled else {
+            PaywallController.shared.show()
+            return
+        }
         hide()
-        // Let the panel fully disappear before capture so it's never in the shot.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             ScreenshotService.captureInteractive { [weak self] base64 in
                 guard let self, let base64 else { return } // cancelled
